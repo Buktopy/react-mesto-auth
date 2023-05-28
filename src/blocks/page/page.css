@@ -1,0 +1,11 @@
+.page {
+    background: #000000;
+    min-height: 100vh;
+    display: block;
+    margin: 0;
+    padding: 0;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-family: 'Inter', Helvetica, sans-serif;
+}
