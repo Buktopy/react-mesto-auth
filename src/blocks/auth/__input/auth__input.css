@@ -1,4 +1,4 @@
-.register__input {
+.auth__input {
     margin: 0 auto 30px auto;
     font-family: 'Inter', Arial, Helvetica, sans-serif;
     font-style: normal;
@@ -11,13 +11,13 @@
     width: 358px;
     height: 14px;
     padding-bottom: 11px;
-    border-bottom: 1px solid #CCCCCC;
+    border-bottom: 2px solid #CCCCCC;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 
 
-.register__input:focus {
+.auth__input:focus {
     outline: none;
 }

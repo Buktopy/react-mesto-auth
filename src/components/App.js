@@ -1,28 +1,48 @@
 import React, { useState, useEffect } from "react";
 import { Route, Redirect, useHistory } from "react-router-dom";
-
-import ProtectedRoute from "./ProtectedRoute";
 import CurrentUserContext from "../contexts/CurrentUserContext";
+
+// Основные компоненты
 import Header from "./Header";
-import Main from "./Main";
+import ProtectedRoute from "./ProtectedRoute";
+import Main from "./Main"; // Используется только в ProtectedRoute
 import Footer from "./Footer";
-import ImagePopup from "./ImagePopup";
-import api from "../utilis/Api";
-import EditProfilePopup from "./EditProfilePopup";
-import EditAvatarPopup from "./EditAvatarPopup";
-import AddPlacePopup from "./AddPlacePopup";
+
+// Компоненты авторизации/регистрации
 import Login from "./Login";
 import Register from "./Register";
 
+// Логика запросов к серверу
+import api from "../utilis/Api";
+import authApi from "../utilis/AuthApi";
+
+// Попапы
+import InfoTooltip from "./InfoTooltip";
+import EditProfilePopup from "./EditProfilePopup";
+import EditAvatarPopup from "./EditAvatarPopup";
+import AddPlacePopup from "./AddPlacePopup";
+import ImagePopup from "./ImagePopup";
+
 function App() {
+  // Хуки для изменения состояния видимости попапов
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false);
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
   const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedCard, setSelectedCard] = useState({});
+  const [isInfoTooltipPopupOpen, setIsInfoTooltipPopupOpen] = useState(false);
+
+  //
   const [currentUser, setCurrentUser] = useState({});
+  const history = useHistory();
   const [cards, setCards] = useState([]);
+  const [selectedCard, setSelectedCard] = useState({});
+  const [isInfoTooltipSuccess, setIsInfoTooltipSuccess] = useState(false);
+
+  //В разработке
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [headerEmail, setHeaderEmail] = useState("");
+
+  // Индикатор загрузки, используется в попапах во время ожидания серверного ответа
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     api
@@ -51,6 +71,7 @@ function App() {
     setIsEditAvatarPopupOpen(false);
     setIsAddPlacePopupOpen(false);
     setSelectedCard({});
+    setIsInfoTooltipPopupOpen(false);
   }
 
   function handleCardLike(card) {
@@ -112,11 +133,75 @@ function App() {
       .finally(() => setIsLoading(false));
   }
 
+  function handleRegisterUser(email, password) {
+    authApi
+      .registerUser(email, password)
+      .then((data) => {
+        if (data) {
+          setIsInfoTooltipSuccess(true);
+          history.push("/sign-in");
+        }
+      })
+      .catch((err) => {
+        setIsInfoTooltipSuccess(false);
+        console.log(err);
+      })
+      .finally(() => setIsInfoTooltipPopupOpen(true));
+  }
+
+  function handleAuthUser(email, password) {
+    authApi
+      .loginUser(email, password)
+      .then((data) => {
+        if (data.token) {
+          setHeaderEmail(email);
+          setIsLoggedIn(true);
+          localStorage.setItem("jwt", data.token);
+          history.push("/");
+        }
+      })
+      .catch((err) => {
+        setIsInfoTooltipSuccess(false);
+        setIsInfoTooltipPopupOpen(true);
+        console.log(err);
+      });
+  }
+
+  useEffect(() => {
+    const jwt = localStorage.getItem("jwt");
+    console.log(jwt);
+    if (jwt) {
+      authApi
+        .checkToken(jwt)
+        .then((data) => {
+          if (data) {
+            setIsLoggedIn(true);
+            setHeaderEmail(data.data.email);
+            history.push("/");
+          }
+        })
+        .catch((err) => console.log(err));
+    }
+  }, [history]);
+
+  function handleSignOut() {
+    localStorage.removeItem("jwt");
+    setHeaderEmail("");
+    setIsLoggedIn(false);
+    history.push("/sign-in");
+  }
+
   return (
     <CurrentUserContext.Provider value={currentUser}>
       <div className="page">
         <div className="main">
-          <Header />
+          <Header
+            signIn="Войти"
+            signUp="Регистрация"
+            signOut="Выйти"
+            onSignOut={handleSignOut}
+            headerEmail={headerEmail}
+          />
           <ProtectedRoute
             component={Main}
             onEditProfile={setIsEditProfilePopupOpen}
@@ -129,12 +214,11 @@ function App() {
             isLoggedIn={isLoggedIn}
             path="/"
           />
-
-          <Route path="/sign-up">
-            <Register />
-          </Route>
           <Route path="/sign-in">
-            <Login />
+            <Login onLogin={handleAuthUser} />
+          </Route>
+          <Route path="/sign-up">
+            <Register onRegister={handleRegisterUser} />
           </Route>
           <Route>
             {isLoggedIn ? <Redirect to="/" /> : <Redirect to="/sign-in" />}
@@ -157,6 +241,11 @@ function App() {
             onClose={closeAllPopups}
             isOpened={isAddPlacePopupOpen}
             onLoading={isLoading}
+          />
+          <InfoTooltip
+            isSuccess={isInfoTooltipSuccess}
+            isOpened={isInfoTooltipPopupOpen}
+            onClose={closeAllPopups}
           />
           {isLoggedIn && <Footer />}
         </div>

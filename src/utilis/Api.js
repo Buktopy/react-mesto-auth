@@ -4,52 +4,56 @@ class Api {
     this._headers = headers;
   }
 
-  _checkServerResponse(res) {
-    return res.ok
-      ? res.json()
-      : Promise.reject(`${res.status} ${res.statusText}`);
-  }
-
-  _makeRequest(url, method, body = null) {
-    return fetch(`${this._baseUrl}/${url}`, {
+  async _request(url, method, body = null) {
+    const options = {
       method,
       headers: this._headers,
-      body: body ? JSON.stringify(body) : null,
-    }).then((res) => this._checkServerResponse(res));
+    };
+
+    if (body) {
+      options.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(`${this._baseUrl}/${url}`, options);
+
+    if (!response.ok) {
+      throw new Error(`${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
   }
 
   getCards() {
-    return this._makeRequest("cards", "GET");
+    return this._request("cards", "GET");
   }
 
   setCard({ name, link }) {
-    return this._makeRequest("cards", "POST", { name, link });
+    return this._request("cards", "POST", { name, link });
   }
 
   deleteCard(_id) {
-    return this._makeRequest(`cards/${_id}`, "DELETE");
+    return this._request(`cards/${_id}`, "DELETE");
   }
 
   getUserInfo() {
-    return this._makeRequest("users/me", "GET");
+    return this._request("users/me", "GET");
   }
 
   setUserInfo(forms) {
-    return this._makeRequest("users/me", "PATCH", forms);
+    return this._request("users/me", "PATCH", forms);
   }
 
   changeAvatar(data) {
-    return this._makeRequest("users/me/avatar", "PATCH", data);
+    return this._request("users/me/avatar", "PATCH", data);
   }
 
   // Совмещенный метод запроса- лайк и его удаление
   setLike(_id, isLiked) {
-    return this._makeRequest(
-      `cards/${_id}/likes`,
-      `${isLiked ? "PUT" : "DELETE"}`
-    );
+    const method = isLiked ? "PUT" : "DELETE";
+    return this._request(`cards/${_id}/likes`, method);
   }
 }
+
 const api = new Api({
   baseUrl: "https://mesto.nomoreparties.co/v1/cohort-60",
   headers: {

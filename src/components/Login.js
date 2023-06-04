@@ -1,19 +1,56 @@
+import React, { useState } from "react";
 import { Redirect } from "react-router-dom";
 
-function Login(isLoggedIn) {
+function Login({ isLoggedIn, onLogin }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   if (isLoggedIn) {
     return <Redirect to="/" />;
   }
 
+  function handlePasswordChange(evt) {
+    setPassword(evt.target.value);
+  }
+
+  function handleEmailChange(evt) {
+    setEmail(evt.target.value);
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    onLogin(email, password);
+  }
+
   return (
-    <div className="login">
-      <h1 className="login__text">Вход</h1>
-      <form className="login__form">
-        <input className="login__input" placeholder="Email"></input>
-        <input className="login__input" placeholder="Пароль"></input>
-        <button className="login__submit-button">Войти</button>
-      </form>
-    </div>
+    <form className="auth" onSubmit={handleSubmit} noValidate>
+      <h1 className="auth__text">Вход</h1>
+      <div className="auth__form">
+        <input
+          className="auth__input"
+          placeholder="Email"
+          id="email"
+          name="email"
+          type="email"
+          value={email}
+          onChange={handleEmailChange}
+          autoComplete="off"
+        ></input>
+        <input
+          className="auth__input"
+          placeholder="Пароль"
+          id="password"
+          name="password"
+          type="password"
+          value={password}
+          onChange={handlePasswordChange}
+          autoComplete="off"
+        ></input>
+        <button className="auth__submit-button" type="submit">
+          Войти
+        </button>
+      </div>
+    </form>
   );
 }
 
