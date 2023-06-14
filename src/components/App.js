@@ -29,29 +29,36 @@ function App() {
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
   const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = useState(false);
   const [isInfoTooltipPopupOpen, setIsInfoTooltipPopupOpen] = useState(false);
-
-  //
-  const [currentUser, setCurrentUser] = useState({});
-  const history = useHistory();
-  const [cards, setCards] = useState([]);
-  const [selectedCard, setSelectedCard] = useState({});
   const [isInfoTooltipSuccess, setIsInfoTooltipSuccess] = useState(false);
-
-  //В разработке
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [headerEmail, setHeaderEmail] = useState("");
 
   // Индикатор загрузки, используется в попапах во время ожидания серверного ответа
   const [isLoading, setIsLoading] = useState(false);
 
+  // История
+  const history = useHistory();
+
+  // Стейт для подписки контекста
+  const [currentUser, setCurrentUser] = useState({});
+
+  // Отрисовка карточек
+  const [cards, setCards] = useState([]);
+  // Добавление новой карточки
+  const [selectedCard, setSelectedCard] = useState({});
+
+  // Состояние залогиненности пользователя
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Показывает E-mail, через который была осуществлена регистрация
+  const [headerEmail, setHeaderEmail] = useState("");
+
   useEffect(() => {
     api
-      .getUserInfo()
-      .then((profileInfo) => setCurrentUser(profileInfo))
+      .getUserInfo() // Получаем данные пользователя
+      .then((profileInfo) => setCurrentUser(profileInfo)) // Переносим в стейт данные
       .catch((err) => console.log(err));
 
     api
-      .getCards()
+      .getCards() // Получаем карточки с сервера, описываем логику что где куда в setCards
       .then((data) => {
         setCards(
           data.map((card) => ({
@@ -66,6 +73,7 @@ function App() {
       .catch((err) => console.log(err));
   }, []);
 
+  // Закрытие любого попапа через эту функцию
   function closeAllPopups() {
     setIsEditProfilePopupOpen(false);
     setIsEditAvatarPopupOpen(false);
@@ -75,6 +83,7 @@ function App() {
   }
 
   function handleCardLike(card) {
+    // Лайк карточки
     const isLiked = card.likes.some((user) => user._id === currentUser._id);
 
     api
@@ -88,6 +97,7 @@ function App() {
   }
 
   function handleCardDelete(card) {
+    // Удаление СВОЕЙ карточки
     api
       .deleteCard(card._id)
       .then(() =>
@@ -97,18 +107,20 @@ function App() {
   }
 
   function handleUpdateUser(newUserInfo) {
-    setIsLoading(true);
+    // Меняем имя и статус пользователя
+    setIsLoading(true); // Лоадер
     api
       .setUserInfo(newUserInfo)
       .then((data) => {
-        setCurrentUser(data);
-        closeAllPopups();
+        setCurrentUser(data); // Меняем данные в стейте
+        closeAllPopups(); // Закрываемся
       })
       .catch((err) => console.log(err))
-      .finally(() => setIsLoading(false));
+      .finally(() => setIsLoading(false)); // Лоадер всё
   }
 
   function handleUpdateAvatar(newAvatar) {
+    // Меняем аватар пользователя
     setIsLoading(true);
     api
       .changeAvatar(newAvatar)
@@ -121,6 +133,7 @@ function App() {
   }
 
   function handleAddPlace(data) {
+    // Добавляем новую карточку
     setIsLoading(true);
 
     api
@@ -134,30 +147,33 @@ function App() {
   }
 
   function handleRegisterUser(email, password) {
+    // Регистрация пользователя
     authApi
-      .registerUser(email, password)
+      .registerUser(email, password) // Отправляем данные на сервер
       .then((data) => {
         if (data) {
-          setIsInfoTooltipSuccess(true);
-          history.push("/sign-in");
+          // Если всё правильно
+          setIsInfoTooltipSuccess(true); // Попап успеха
+          history.push("/sign-in"); // Переводим на рут авторизации
         }
       })
       .catch((err) => {
-        setIsInfoTooltipSuccess(false);
+        setIsInfoTooltipSuccess(false); // Попап отрицательного успеха
         console.log(err);
       })
-      .finally(() => setIsInfoTooltipPopupOpen(true));
+      .finally(() => setIsInfoTooltipPopupOpen(true)); // Открываем попап ошибки/успеха
   }
 
   function handleAuthUser(email, password) {
+    // Авторизация пользователя
     authApi
       .loginUser(email, password)
       .then((data) => {
         if (data.token) {
-          setHeaderEmail(email);
-          setIsLoggedIn(true);
-          localStorage.setItem("jwt", data.token);
-          history.push("/");
+          setHeaderEmail(email); // В хедер записываем E-mail
+          setIsLoggedIn(true); // Меняем стейт для доступа к Main компоненту
+          localStorage.setItem("jwt", data.token); // Сохраняем токен для последующий заходов без авторизации
+          history.push("/"); // Переводим на главный рут
         }
       })
       .catch((err) => {
@@ -168,6 +184,7 @@ function App() {
   }
 
   useEffect(() => {
+    // Проверка токена авторизованности
     const jwt = localStorage.getItem("jwt");
     console.log(jwt);
     if (jwt) {
@@ -175,9 +192,10 @@ function App() {
         .checkToken(jwt)
         .then((data) => {
           if (data) {
-            setIsLoggedIn(true);
-            setHeaderEmail(data.data.email);
-            history.push("/");
+            // Если данные валидны
+            setIsLoggedIn(true); // Допускаем к компоненту Main
+            setHeaderEmail(data.data.email); // В хедер записываем E-mail
+            history.push("/"); // Переводим на главный рут
           }
         })
         .catch((err) => console.log(err));
@@ -185,10 +203,11 @@ function App() {
   }, [history]);
 
   function handleSignOut() {
-    localStorage.removeItem("jwt");
-    setHeaderEmail("");
-    setIsLoggedIn(false);
-    history.push("/sign-in");
+    // Выход из "аккаунта"
+    localStorage.removeItem("jwt"); // Удаляем токен
+    setHeaderEmail(""); // Убираем из хедера E-mail
+    setIsLoggedIn(false); // Перевод стейта для блока к главному руту
+    history.push("/sign-in"); // Перевод пользователя на экран авторизации
   }
 
   return (
@@ -223,6 +242,7 @@ function App() {
           <Route>
             {isLoggedIn ? <Redirect to="/" /> : <Redirect to="/sign-in" />}
           </Route>
+          {isLoggedIn && <Footer />}
           <ImagePopup card={selectedCard} onClose={closeAllPopups} />
           <EditProfilePopup
             onUpdateUser={handleUpdateUser}
@@ -247,7 +267,6 @@ function App() {
             isOpened={isInfoTooltipPopupOpen}
             onClose={closeAllPopups}
           />
-          {isLoggedIn && <Footer />}
         </div>
       </div>
     </CurrentUserContext.Provider>

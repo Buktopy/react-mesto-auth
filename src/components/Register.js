@@ -23,7 +23,12 @@ function Register({ isLoggedIn, onRegister }) {
   }
 
   return (
-    <form className="auth" onSubmit={handleSubmit} noValidate>
+    <form
+      className="auth"
+      onSubmit={handleSubmit}
+      autoComplete="off"
+      noValidate
+    >
       <h1 className="auth__text">Регистрация</h1>
       <div className="auth__form">
         <input
@@ -34,7 +39,6 @@ function Register({ isLoggedIn, onRegister }) {
           type="email"
           value={email}
           onChange={handleEmailChange}
-          autoComplete="off"
         ></input>
         <input
           className="auth__input"
@@ -44,7 +48,6 @@ function Register({ isLoggedIn, onRegister }) {
           type="password"
           value={password}
           onChange={handlePasswordChange}
-          autoComplete="off"
         ></input>
         <button className="auth__submit-button" type="submit">
           Зарегистрироваться
