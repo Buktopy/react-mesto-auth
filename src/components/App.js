@@ -106,8 +106,8 @@ function App() {
       .catch((err) => console.log(err));
   }
 
+  // Меняем имя и статус пользователя
   function handleUpdateUser(newUserInfo) {
-    // Меняем имя и статус пользователя
     setIsLoading(true); // Лоадер
     api
       .setUserInfo(newUserInfo)
@@ -119,8 +119,8 @@ function App() {
       .finally(() => setIsLoading(false)); // Лоадер всё
   }
 
+  // Меняем аватар пользователя
   function handleUpdateAvatar(newAvatar) {
-    // Меняем аватар пользователя
     setIsLoading(true);
     api
       .changeAvatar(newAvatar)
@@ -132,8 +132,8 @@ function App() {
       .finally(() => setIsLoading(false));
   }
 
+  // Добавляем новую карточку
   function handleAddPlace(data) {
-    // Добавляем новую карточку
     setIsLoading(true);
 
     api
@@ -164,8 +164,8 @@ function App() {
       .finally(() => setIsInfoTooltipPopupOpen(true)); // Открываем попап ошибки/успеха
   }
 
+  // Авторизация пользователя
   function handleAuthUser(email, password) {
-    // Авторизация пользователя
     authApi
       .loginUser(email, password)
       .then((data) => {
