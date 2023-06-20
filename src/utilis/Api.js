@@ -31,8 +31,8 @@ class Api {
     return this._request("cards", "POST", { name, link });
   }
 
-  deleteCard(_id) {
-    return this._request(`cards/${_id}`, "DELETE");
+  deleteCard(id) {
+    return this._request(`cards/${id}`, "DELETE");
   }
 
   getUserInfo() {
@@ -48,9 +48,9 @@ class Api {
   }
 
   // Совмещенный метод запроса- лайк и его удаление
-  setLike(_id, isLiked) {
+  setLike(id, isLiked) {
     const method = isLiked ? "PUT" : "DELETE";
-    return this._request(`cards/${_id}/likes`, method);
+    return this._request(`cards/${id}/likes`, method);
   }
 }
 

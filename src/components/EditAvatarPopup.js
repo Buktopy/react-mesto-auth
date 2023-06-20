@@ -16,10 +16,6 @@ function EditAvatarPopup({ isOpened, onClose, onUpdateAvatar, onLoading }) {
     });
   }
 
-  function handleChangeAvatar() {
-    return avatarRef.current.value;
-  }
-
   return (
     <PopupWithForm
       onSubmit={handleSubmit}
@@ -31,7 +27,6 @@ function EditAvatarPopup({ isOpened, onClose, onUpdateAvatar, onLoading }) {
     >
       <input
         ref={avatarRef}
-        onChange={handleChangeAvatar}
         autoComplete="off"
         required
         name="avatar"

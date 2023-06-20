@@ -15,6 +15,7 @@ function EditProfilePopup({ isOpened, onClose, onUpdateUser, onLoading }) {
   function handleSubmit(e) {
     e.preventDefault();
     onUpdateUser({
+      // У меня Prettier и я его не контролирую
       name: name,
       about: about,
     });

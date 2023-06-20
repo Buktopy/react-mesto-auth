@@ -2,78 +2,80 @@ import React, { useState, useEffect } from "react";
 import { Route, Redirect, useHistory } from "react-router-dom";
 import CurrentUserContext from "../contexts/CurrentUserContext";
 
-// Основные компоненты
+/** Основные компоненты */
 import Header from "./Header";
 import ProtectedRoute from "./ProtectedRoute";
-import Main from "./Main"; // Используется только в ProtectedRoute
+import Main from "./Main";
 import Footer from "./Footer";
 
-// Компоненты авторизации/регистрации
+/** Компоненты авторизации/регистрации */
 import Login from "./Login";
 import Register from "./Register";
 
-// Логика запросов к серверу
+/** Логика запросов к серверу */
 import api from "../utilis/Api";
 import authApi from "../utilis/AuthApi";
 
-// Попапы
+/** Попапы */
 import InfoTooltip from "./InfoTooltip";
 import EditProfilePopup from "./EditProfilePopup";
 import EditAvatarPopup from "./EditAvatarPopup";
 import AddPlacePopup from "./AddPlacePopup";
 import ImagePopup from "./ImagePopup";
-
+/** Хуки для изменения состояния видимости попапов */
 function App() {
-  // Хуки для изменения состояния видимости попапов
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false);
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
   const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = useState(false);
   const [isInfoTooltipPopupOpen, setIsInfoTooltipPopupOpen] = useState(false);
   const [isInfoTooltipSuccess, setIsInfoTooltipSuccess] = useState(false);
 
-  // Индикатор загрузки, используется в попапах во время ожидания серверного ответа
-  const [isLoading, setIsLoading] = useState(false);
+  /** Индикатор загрузки, используется в попапах во время ожидания серверного ответа */
+  const [isUpdateUserLoading, setIsUpdateUserLoading] = useState(false);
+  const [isUpdateAvatarLoading, setIsUpdateAvatarLoading] = useState(false);
+  const [isAddPlaceLoading, setIsAddPlaceLoading] = useState(false);
 
-  // История
+  /** История */
   const history = useHistory();
 
-  // Стейт для подписки контекста
+  /** Стейт для подписки контекста */
   const [currentUser, setCurrentUser] = useState({});
 
-  // Отрисовка карточек
+  /** Отрисовка карточек */
   const [cards, setCards] = useState([]);
-  // Добавление новой карточки
+  /** Добавление новой карточки */
   const [selectedCard, setSelectedCard] = useState({});
 
-  // Состояние залогиненности пользователя
+  /** Состояние залогиненности пользователя */
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Показывает E-mail, через который была осуществлена регистрация
+  /** Показывает E-mail, через который была осуществлена регистрация */
   const [headerEmail, setHeaderEmail] = useState("");
 
+  /** Получаем всю информацию о пользователе и карточках через Promise.all, затем передаем в стейты эти данные(если isLoggedIn равен true) */
   useEffect(() => {
-    api
-      .getUserInfo() // Получаем данные пользователя
-      .then((profileInfo) => setCurrentUser(profileInfo)) // Переносим в стейт данные
-      .catch((err) => console.log(err));
+    if (isLoggedIn) {
+      Promise.all([api.getUserInfo(), api.getCards()])
+        .then(([profileInfo, cardData]) => {
+          setCurrentUser(profileInfo);
+          setCards(cardData);
+        })
+        .catch((err) => console.log(err));
+    }
+  }, [isLoggedIn]);
 
-    api
-      .getCards() // Получаем карточки с сервера, описываем логику что где куда в setCards
-      .then((data) => {
-        setCards(
-          data.map((card) => ({
-            _id: card._id,
-            name: card.name,
-            link: card.link,
-            likes: card.likes,
-            owner: card.owner,
-          }))
-        );
-      })
-      .catch((err) => console.log(err));
-  }, []);
+  /** Открытие попапов main компонента */
+  function handleAvatarPopupOpen() {
+    setIsEditAvatarPopupOpen(true);
+  }
+  function handleEditProfilePopupOpen() {
+    setIsEditProfilePopupOpen(true);
+  }
+  function handleAddPlacePopupOpen() {
+    setIsAddPlacePopupOpen(true);
+  }
 
-  // Закрытие любого попапа через эту функцию
+  /** Закрытие любого попапа через эту функцию */
   function closeAllPopups() {
     setIsEditProfilePopupOpen(false);
     setIsEditAvatarPopupOpen(false);
@@ -82,8 +84,8 @@ function App() {
     setIsInfoTooltipPopupOpen(false);
   }
 
+  /** Лайк карточки */
   function handleCardLike(card) {
-    // Лайк карточки
     const isLiked = card.likes.some((user) => user._id === currentUser._id);
 
     api
@@ -96,8 +98,8 @@ function App() {
       .catch((err) => console.log(err));
   }
 
+  /** Удаление карточки(только своей) */
   function handleCardDelete(card) {
-    // Удаление СВОЕЙ карточки
     api
       .deleteCard(card._id)
       .then(() =>
@@ -106,22 +108,22 @@ function App() {
       .catch((err) => console.log(err));
   }
 
-  // Меняем имя и статус пользователя
+  /** Меняем имя и статус пользователя */
   function handleUpdateUser(newUserInfo) {
-    setIsLoading(true); // Лоадер
+    setIsUpdateUserLoading(true);
     api
       .setUserInfo(newUserInfo)
       .then((data) => {
-        setCurrentUser(data); // Меняем данные в стейте
-        closeAllPopups(); // Закрываемся
+        setCurrentUser(data);
+        closeAllPopups();
       })
       .catch((err) => console.log(err))
-      .finally(() => setIsLoading(false)); // Лоадер всё
+      .finally(() => setIsUpdateUserLoading(false));
   }
 
-  // Меняем аватар пользователя
+  /** Меняем аватар пользователя */
   function handleUpdateAvatar(newAvatar) {
-    setIsLoading(true);
+    setIsUpdateAvatarLoading(true);
     api
       .changeAvatar(newAvatar)
       .then((data) => {
@@ -129,12 +131,12 @@ function App() {
         closeAllPopups();
       })
       .catch((err) => console.log(err))
-      .finally(() => setIsLoading(false));
+      .finally(() => setIsUpdateAvatarLoading(false));
   }
 
-  // Добавляем новую карточку
+  /** Добавляем новую карточку */
   function handleAddPlace(data) {
-    setIsLoading(true);
+    setIsAddPlaceLoading(true);
 
     api
       .setCard(data)
@@ -143,37 +145,40 @@ function App() {
         closeAllPopups();
       })
       .catch((err) => console.log(err))
-      .finally(() => setIsLoading(false));
+      .finally(() => setIsAddPlaceLoading(false));
   }
 
+  /** Регистрация пользователя:
+   * Если введенные данные валидны- попап успеха и переход на экран авторизации пользователя, если нет- попап отрицательного успеха
+   */
   function handleRegisterUser(email, password) {
-    // Регистрация пользователя
     authApi
-      .registerUser(email, password) // Отправляем данные на сервер
+      .registerUser(email, password)
       .then((data) => {
         if (data) {
-          // Если всё правильно
-          setIsInfoTooltipSuccess(true); // Попап успеха
-          history.push("/sign-in"); // Переводим на рут авторизации
+          setIsInfoTooltipSuccess(true);
+          history.push("/sign-in");
         }
       })
       .catch((err) => {
-        setIsInfoTooltipSuccess(false); // Попап отрицательного успеха
+        setIsInfoTooltipSuccess(false);
         console.log(err);
       })
-      .finally(() => setIsInfoTooltipPopupOpen(true)); // Открываем попап ошибки/успеха
+      .finally(() => setIsInfoTooltipPopupOpen(true));
   }
 
-  // Авторизация пользователя
+  /** Авторизация пользователя:
+   * Если введенные данные валидны, устанавливаем E-mail в хедер, устанавливаем токен и переходим в main рут, если нет- попап отрицательного успеха
+   */
   function handleAuthUser(email, password) {
     authApi
       .loginUser(email, password)
       .then((data) => {
         if (data.token) {
-          setHeaderEmail(email); // В хедер записываем E-mail
-          setIsLoggedIn(true); // Меняем стейт для доступа к Main компоненту
-          localStorage.setItem("jwt", data.token); // Сохраняем токен для последующий заходов без авторизации
-          history.push("/"); // Переводим на главный рут
+          setHeaderEmail(email);
+          setIsLoggedIn(true);
+          localStorage.setItem("jwt", data.token);
+          history.push("/");
         }
       })
       .catch((err) => {
@@ -182,32 +187,34 @@ function App() {
         console.log(err);
       });
   }
-
+  /** Проверка токена, если он валиден- сразу же переходим на main рут*/
   useEffect(() => {
-    // Проверка токена авторизованности
     const jwt = localStorage.getItem("jwt");
-    console.log(jwt);
     if (jwt) {
       authApi
         .checkToken(jwt)
         .then((data) => {
           if (data) {
-            // Если данные валидны
-            setIsLoggedIn(true); // Допускаем к компоненту Main
-            setHeaderEmail(data.data.email); // В хедер записываем E-mail
-            history.push("/"); // Переводим на главный рут
+            setIsLoggedIn(true);
+            setHeaderEmail(data.data.email);
+            history.push("/");
           }
         })
         .catch((err) => console.log(err));
     }
   }, [history]);
 
+  /** Обработка выхода из "аккаунта":
+   * Удаляем токен
+   * Устанавливаем стейт E-mail на пустой,
+   * Устанавливаем стейт залогиненности на false,
+   * Переводим на страницу авторизации
+   */
   function handleSignOut() {
-    // Выход из "аккаунта"
-    localStorage.removeItem("jwt"); // Удаляем токен
-    setHeaderEmail(""); // Убираем из хедера E-mail
-    setIsLoggedIn(false); // Перевод стейта для блока к главному руту
-    history.push("/sign-in"); // Перевод пользователя на экран авторизации
+    localStorage.removeItem("jwt");
+    setHeaderEmail("");
+    setIsLoggedIn(false);
+    history.push("/sign-in");
   }
 
   return (
@@ -223,9 +230,9 @@ function App() {
           />
           <ProtectedRoute
             component={Main}
-            onEditProfile={setIsEditProfilePopupOpen}
-            onChangeAvatar={setIsEditAvatarPopupOpen}
-            onAddCard={setIsAddPlacePopupOpen}
+            onEditProfile={handleEditProfilePopupOpen}
+            onChangeAvatar={handleAvatarPopupOpen}
+            onAddCard={handleAddPlacePopupOpen}
             onCardClick={setSelectedCard}
             onCardLike={handleCardLike}
             onCardDelete={handleCardDelete}
@@ -248,19 +255,19 @@ function App() {
             onUpdateUser={handleUpdateUser}
             isOpened={isEditProfilePopupOpen}
             onClose={closeAllPopups}
-            onLoading={isLoading}
+            onLoading={isUpdateUserLoading}
           />
           <EditAvatarPopup
             onUpdateAvatar={handleUpdateAvatar}
             isOpened={isEditAvatarPopupOpen}
             onClose={closeAllPopups}
-            onLoading={isLoading}
+            onLoading={isUpdateAvatarLoading}
           />
           <AddPlacePopup
             onAddPlace={handleAddPlace}
             onClose={closeAllPopups}
             isOpened={isAddPlacePopupOpen}
-            onLoading={isLoading}
+            onLoading={isAddPlaceLoading}
           />
           <InfoTooltip
             isSuccess={isInfoTooltipSuccess}

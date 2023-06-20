@@ -19,13 +19,6 @@ function AddPlacePopup({ isOpened, onClose, isLoading, onAddPlace }) {
     });
   }
 
-  function handlePlaceName() {
-    return nameRef.current.value;
-  }
-
-  function handlePlaceLink() {
-    return linkRef.current.value;
-  }
   return (
     <PopupWithForm
       onSubmit={handleSubmit}
@@ -37,7 +30,6 @@ function AddPlacePopup({ isOpened, onClose, isLoading, onAddPlace }) {
     >
       <input
         ref={nameRef}
-        onChange={handlePlaceName}
         autoComplete="off"
         required
         name="name"
@@ -51,7 +43,6 @@ function AddPlacePopup({ isOpened, onClose, isLoading, onAddPlace }) {
       <span className="popup__input-error text-input-error"></span>
       <input
         ref={linkRef}
-        onChange={handlePlaceLink}
         autoComplete="off"
         required
         name="link"
